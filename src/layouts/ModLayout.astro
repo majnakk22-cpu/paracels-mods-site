@@ -1,0 +1,133 @@
+---
+// Общая обёртка страницы мода: тематическая шапка, вкладки, боковая панель
+import Base from './Base.astro';
+import ModIcon from '../components/ModIcon.astro';
+import Icon from '../components/Icon.astro';
+import { type ModInfo, pageSlug, resolveDeps } from '../lib/mods';
+import { themeVars, themeFonts } from '../lib/theme';
+import { url, formatDate, compact } from '../lib/url';
+import { STATUS_LABEL } from '../site.config';
+
+interface Props {
+  info: ModInfo;
+  tab: 'overview' | 'wiki' | 'versions' | 'gallery';
+  title?: string;
+  description?: string;
+  currentPage?: string; // slug подстраницы
+}
+const { info, tab, title, description, currentPage } = Astro.props;
+const d = info.mod.data;
+const t = d.theme;
+const base = `/mods/${info.slug}`;
+const deps = await resolveDeps(d.requires);
+const opt = await resolveDeps(d.optional);
+const latest = info.latest;
+const showNav = tab === 'wiki' || (tab === 'overview' && info.pages.length > 0);
+const repoUrl = d.repo ? `https://github.com/${d.repo}` : undefined;
+---
+<Base
+  title={title ? `${title} · ${d.name}` : d.name}
+  description={description || d.summary}
+  style={themeVars(t)}
+  bodyClass={`modpage mod-${info.slug}`}
+  fonts={themeFonts(t)}
+  extraCss={t.css}
+  hub={false}
+  ogImage={t.banner || d.icon}
+>
+  <section class="mod-hero">
+    {t.banner ? <div class="banner" style={`background-image:url('${url(t.banner)}')`} /> : <div class={`pattern pattern-${t.pattern}`} />}
+    <div class="container">
+      <div class="inner">
+        <ModIcon name={d.name} icon={d.icon} />
+        <div>
+          <div class="chips">
+            <span class={`chip status status-${d.status}`}>{STATUS_LABEL[d.status]}</span>
+            <span class="chip">{d.loader}</span>
+            {d.mcVersions.map((v) => <span class="chip">{v}</span>)}
+          </div>
+          <h1>{d.name}</h1>
+          <p class="sum">{d.summary}</p>
+          <div class="chips">
+            {d.categories.map((c) => <a class="chip chip-accent" href={url('/?cat=' + encodeURIComponent(c))}>{c}</a>)}
+          </div>
+        </div>
+        <div class="actions">
+          {latest?.url
+            ? <a class="btn btn-primary" href={latest.url}><Icon name="download" />Скачать {latest.version}</a>
+            : <span class="btn btn-primary" aria-disabled="true"><Icon name="download" />Скоро</span>}
+          {repoUrl && <a class="btn btn-ghost" href={repoUrl} target="_blank" rel="noopener"><Icon name="github" />GitHub</a>}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="container">
+    <nav class="tabs" aria-label="Разделы мода">
+      <a href={url(base + '/')} aria-current={tab === 'overview' ? 'page' : undefined}>Описание</a>
+      {info.pages.length > 0 && (
+        <a href={url(`${base}/wiki/${pageSlug(info.pages[0])}/`)} aria-current={tab === 'wiki' ? 'page' : undefined}>
+          Страницы<span class="count">{info.pages.length}</span>
+        </a>
+      )}
+      <a href={url(base + '/versions/')} aria-current={tab === 'versions' ? 'page' : undefined}>
+        Версии<span class="count">{info.versions.length}</span>
+      </a>
+      {d.gallery.length > 0 && (
+        <a href={url(base + '/gallery/')} aria-current={tab === 'gallery' ? 'page' : undefined}>
+          Галерея<span class="count">{d.gallery.length}</span>
+        </a>
+      )}
+    </nav>
+
+    <div class:list={['mod-body', showNav && 'with-nav']}>
+      {showNav && (
+        <nav class="wiki-nav" aria-label="Страницы мода">
+          <h4>Страницы</h4>
+          <a href={url(base + '/')} aria-current={tab === 'overview' ? 'page' : undefined}>Обзор</a>
+          {info.pages.map((p) => (
+            <a href={url(`${base}/wiki/${pageSlug(p)}/`)} aria-current={currentPage === pageSlug(p) ? 'page' : undefined}>{p.data.title}</a>
+          ))}
+        </nav>
+      )}
+
+      <div><slot /></div>
+
+      <aside class="side">
+        <div class="panel">
+          <h4>Информация</h4>
+          <dl class="kv">
+            <dt>Загрузчик</dt><dd>{d.loader}</dd>
+            <dt>Minecraft</dt><dd>{d.mcVersions.join(', ')}</dd>
+            {d.modid && <><dt>modid</dt><dd><code>{d.modid}</code></dd></>}
+            {latest && <><dt>Версия</dt><dd>{latest.version}</dd></>}
+            {info.downloads !== undefined && <><dt>Скачиваний</dt><dd>{compact(info.downloads)}</dd></>}
+            {info.updated && <><dt>Обновлено</dt><dd>{formatDate(info.updated)}</dd></>}
+            {d.license && <><dt>Лицензия</dt><dd>{d.license}</dd></>}
+          </dl>
+        </div>
+        {(deps.length > 0 || opt.length > 0) && (
+          <div class="panel">
+            <h4>Зависимости</h4>
+            {deps.map((x) => x.info
+              ? <a class="dep" href={url(`/mods/${x.info.slug}/`)}><ModIcon name={x.name} icon={x.info.mod.data.icon} />{x.name}<span class="chip" style="margin-left:auto">нужен</span></a>
+              : <div class="dep"><ModIcon name={x.name} />{x.name}<span class="chip" style="margin-left:auto">нужен</span></div>)}
+            {opt.map((x) => x.info
+              ? <a class="dep" href={url(`/mods/${x.info.slug}/`)}><ModIcon name={x.name} icon={x.info.mod.data.icon} />{x.name}<span class="chip" style="margin-left:auto">опц.</span></a>
+              : <div class="dep"><ModIcon name={x.name} />{x.name}<span class="chip" style="margin-left:auto">опц.</span></div>)}
+          </div>
+        )}
+        {(d.links.length > 0 || repoUrl) && (
+          <div class="panel">
+            <h4>Ссылки</h4>
+            <div class="links">
+              {repoUrl && <a href={repoUrl} target="_blank" rel="noopener"><Icon name="github" />Исходный код</a>}
+              {repoUrl && <a href={repoUrl + '/issues'} target="_blank" rel="noopener"><Icon name="link" />Сообщить об ошибке</a>}
+              {d.links.map((l) => <a href={l.url} target="_blank" rel="noopener"><Icon name="link" />{l.label}</a>)}
+            </div>
+          </div>
+        )}
+      </aside>
+    </div>
+  </div>
+</Base>

@@ -1,0 +1,20 @@
+---
+import { render } from 'astro:content';
+import ModLayout from '../../../../layouts/ModLayout.astro';
+import { getMods, pageSlug } from '../../../../lib/mods';
+
+export async function getStaticPaths() {
+  const mods = await getMods();
+  return mods.flatMap((info) =>
+    info.pages.map((p) => ({ params: { slug: info.slug, page: pageSlug(p) }, props: { info, page: p } })),
+  );
+}
+const { info, page } = Astro.props;
+const { Content } = await render(page);
+---
+<ModLayout info={info} tab="wiki" title={page.data.title} description={page.data.description} currentPage={pageSlug(page)}>
+  <article class="prose">
+    <h1>{page.data.title}</h1>
+    <Content />
+  </article>
+</ModLayout>

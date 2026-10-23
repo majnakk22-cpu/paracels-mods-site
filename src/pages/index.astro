@@ -1,0 +1,137 @@
+---
+import Base from '../layouts/Base.astro';
+import ModCard from '../components/ModCard.astro';
+import ModIcon from '../components/ModIcon.astro';
+import Icon from '../components/Icon.astro';
+import { getMods } from '../lib/mods';
+import { cardVars, themeFonts } from '../lib/theme';
+import { url, plural, compact } from '../lib/url';
+import { SITE, STATUS_LABEL } from '../site.config';
+
+const mods = await getMods();
+const featured = mods.filter((m) => m.mod.data.featured);
+const cats = new Map<string, number>();
+for (const m of mods) for (const c of m.mod.data.categories) cats.set(c, (cats.get(c) || 0) + 1);
+const catList = [...cats.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+const statuses = new Map<string, number>();
+for (const m of mods) statuses.set(m.mod.data.status, (statuses.get(m.mod.data.status) || 0) + 1);
+const totalDl = mods.reduce((s, m) => s + (m.downloads || 0), 0);
+const pagesCount = mods.reduce((s, m) => s + m.pages.length, 0);
+const featFonts = featured.flatMap((m) => themeFonts(m.mod.data.theme).slice(-1));
+---
+<Base fonts={featFonts}>
+  <section class="hero">
+    <div class="container">
+      <h1>Моды от <span>{SITE.author}</span></h1>
+      <p>{SITE.tagline}</p>
+      <div class="hero-stats">
+        <div><b>{mods.length}</b><span>{plural(mods.length, 'мод', 'мода', 'модов')}</span></div>
+        <div><b>{pagesCount}</b><span>{plural(pagesCount, 'страница', 'страницы', 'страниц')} вики</span></div>
+        {totalDl > 0 && <div><b>{compact(totalDl)}</b><span>скачиваний</span></div>}
+      </div>
+    </div>
+  </section>
+
+  <div class="container">
+    {featured.length > 0 && (
+      <section class="featured" aria-label="Избранное">
+        {featured.map((m) => (
+          <a class="feat-card" href={url(`/mods/${m.slug}/`)} style={cardVars(m.mod.data.theme)}>
+            <div class={`pattern pattern-${m.mod.data.theme.pattern}`} />
+            <div class="row">
+              <ModIcon name={m.mod.data.name} icon={m.mod.data.icon} size={48} />
+              <div>
+                <h3>{m.mod.data.name}</h3>
+                <p>{m.mod.data.summary}</p>
+              </div>
+            </div>
+          </a>
+        ))}
+      </section>
+    )}
+
+    <section class="catalog">
+      <aside class="filters" aria-label="Фильтры">
+        <div class="filter-group">
+          <h4>Категории</h4>
+          <div class="opts">
+            {catList.map(([c, n]) => (
+              <label class="opt"><input type="checkbox" name="cat" value={c} />{c}<span class="n">{n}</span></label>
+            ))}
+          </div>
+        </div>
+        <div class="filter-group">
+          <h4>Статус</h4>
+          <div class="opts">
+            {[...statuses.entries()].map(([s, n]) => (
+              <label class="opt"><input type="checkbox" name="status" value={s} />{STATUS_LABEL[s]}<span class="n">{n}</span></label>
+            ))}
+          </div>
+        </div>
+      </aside>
+
+      <div>
+        <div class="toolbar">
+          <label class="search">
+            <span class="sr-only">Поиск</span>
+            <Icon name="search" />
+            <input id="q" type="search" placeholder="Поиск модов…" autocomplete="off" />
+          </label>
+          <select class="select" id="sort" aria-label="Сортировка">
+            <option value="order">По умолчанию</option>
+            <option value="updated">Недавно обновлённые</option>
+            <option value="name">По названию</option>
+            {totalDl > 0 && <option value="downloads">По скачиваниям</option>}
+          </select>
+        </div>
+        <div class="mod-list" id="list">
+          {mods.map((m, i) => <ModCard info={m} index={i} />)}
+        </div>
+        <p class="empty" id="empty" hidden>Ничего не найдено. Попробуй убрать фильтры.</p>
+      </div>
+    </section>
+  </div>
+
+  <script is:inline>
+    (function () {
+      var list = document.getElementById('list');
+      var cards = Array.prototype.slice.call(list.children);
+      var q = document.getElementById('q');
+      var sort = document.getElementById('sort');
+      var empty = document.getElementById('empty');
+      var boxes = Array.prototype.slice.call(document.querySelectorAll('.filters input'));
+      var params = new URLSearchParams(location.search);
+      var pre = params.getAll('cat');
+      boxes.forEach(function (b) { if (b.name === 'cat' && pre.indexOf(b.value) >= 0) b.checked = true; });
+      if (params.get('q')) q.value = params.get('q');
+
+      function apply() {
+        var text = q.value.trim().toLowerCase();
+        var cats = boxes.filter(function (b) { return b.name === 'cat' && b.checked; }).map(function (b) { return b.value; });
+        var sts = boxes.filter(function (b) { return b.name === 'status' && b.checked; }).map(function (b) { return b.value; });
+        var shown = 0;
+        cards.forEach(function (c) {
+          var mc = JSON.parse(c.dataset.cats);
+          var ok = (!text || c.dataset.search.indexOf(text) >= 0)
+            && cats.every(function (x) { return mc.indexOf(x) >= 0; })
+            && (!sts.length || sts.indexOf(c.dataset.status) >= 0);
+          c.hidden = !ok;
+          if (ok) shown++;
+        });
+        empty.hidden = shown > 0;
+        var key = sort.value;
+        var sorted = cards.slice().sort(function (a, b) {
+          if (key === 'name') return a.dataset.name.localeCompare(b.dataset.name, 'ru');
+          if (key === 'updated') return b.dataset.updated - a.dataset.updated;
+          if (key === 'downloads') return b.dataset.downloads - a.dataset.downloads;
+          return a.dataset.order - b.dataset.order;
+        });
+        sorted.forEach(function (c) { list.appendChild(c); });
+      }
+      q.addEventListener('input', apply);
+      sort.addEventListener('change', apply);
+      boxes.forEach(function (b) { b.addEventListener('change', apply); });
+      apply();
+    })();
+  </script>
+</Base>

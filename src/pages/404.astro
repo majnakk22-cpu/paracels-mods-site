@@ -1,0 +1,11 @@
+---
+import Base from '../layouts/Base.astro';
+import { url } from '../lib/url';
+---
+<Base title="Не найдено">
+  <section class="hero"><div class="container">
+    <h1>404 — <span>пусто</span></h1>
+    <p>Такой страницы нет. Возможно, её съели паразиты.</p>
+    <p style="margin-top:20px"><a class="btn btn-primary" href={url('/')}>К списку модов</a></p>
+  </div></section>
+</Base>

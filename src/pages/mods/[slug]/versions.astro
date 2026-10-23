@@ -1,0 +1,42 @@
+---
+import ModLayout from '../../../layouts/ModLayout.astro';
+import Icon from '../../../components/Icon.astro';
+import { getMods } from '../../../lib/mods';
+import { formatDate, compact } from '../../../lib/url';
+
+export async function getStaticPaths() {
+  const mods = await getMods();
+  return mods.map((info) => ({ params: { slug: info.slug }, props: { info } }));
+}
+const { info } = Astro.props;
+const TYPE: Record<string, string> = { release: 'Релиз', beta: 'Бета', alpha: 'Альфа' };
+const hasDl = info.versions.some((v) => v.downloads !== undefined);
+---
+<ModLayout info={info} tab="versions" title="Версии">
+  {info.versions.length === 0
+    ? <p class="empty">Версий пока нет — мод в разработке.</p>
+    : (
+      <table class="versions">
+        <thead><tr><th>Версия</th><th>Тип</th><th>Minecraft</th><th>Дата</th>{hasDl && <th>Скачано</th>}<th></th></tr></thead>
+        <tbody>
+          {info.versions.map((v) => (
+            <tr>
+              <td class="v">
+                {v.pageUrl ? <a href={v.pageUrl} target="_blank" rel="noopener">{v.version}</a> : v.version}
+                {v.changelog && <div class="changelog">{v.changelog.length > 600 ? v.changelog.slice(0, 600) + '…' : v.changelog}</div>}
+              </td>
+              <td><span class={`chip status status-${v.type}`}>{TYPE[v.type]}</span></td>
+              <td class="hide-sm">{v.mc ?? info.mod.data.mcVersions[0]}</td>
+              <td class="hide-sm">{formatDate(v.date)}</td>
+              {hasDl && <td class="hide-sm">{compact(v.downloads ?? 0)}</td>}
+              <td class="dl">
+                {v.url
+                  ? <a class="dl-icon" href={v.url} title={'Скачать ' + (v.fileName || v.version)} aria-label={'Скачать ' + v.version}><Icon name="download" /></a>
+                  : <span class="chip">скоро</span>}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    )}
+</ModLayout>

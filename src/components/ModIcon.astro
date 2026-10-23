@@ -1,0 +1,10 @@
+---
+import { url } from '../lib/url';
+interface Props { name: string; icon?: string; size?: number | string; class?: string }
+const { name, icon, size, class: cls } = Astro.props;
+const letters = name.replace(/[^\p{L}\p{N} ]/gu, '').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+const style = size ? `width:${typeof size === 'number' ? size + 'px' : size}` : undefined;
+---
+{icon
+  ? <div class:list={['mod-icon', cls]} style={style}><img src={url(icon)} alt="" loading="lazy" /></div>
+  : <div class:list={['mod-icon mono', cls]} style={style} aria-hidden="true">{letters}</div>}

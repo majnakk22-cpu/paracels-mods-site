@@ -1,0 +1,21 @@
+---
+import ModLayout from '../../../layouts/ModLayout.astro';
+import { getMods } from '../../../lib/mods';
+import { url } from '../../../lib/url';
+
+export async function getStaticPaths() {
+  const mods = await getMods();
+  return mods.filter((i) => i.mod.data.gallery.length > 0).map((info) => ({ params: { slug: info.slug }, props: { info } }));
+}
+const { info } = Astro.props;
+---
+<ModLayout info={info} tab="gallery" title="Галерея">
+  <div class="gallery">
+    {info.mod.data.gallery.map((g) => (
+      <figure>
+        <a href={url(g.src)} target="_blank"><img src={url(g.src)} alt={g.caption || ''} loading="lazy" /></a>
+        {g.caption && <figcaption>{g.caption}</figcaption>}
+      </figure>
+    ))}
+  </div>
+</ModLayout>
