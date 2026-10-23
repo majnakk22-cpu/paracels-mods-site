@@ -7,7 +7,7 @@ loader: Forge
 mcVersions: ["1.20.1"]
 modid: folio
 order: 10
-# repo: paracels/folio
+repo: majnakk22-cpu/Folio
 versions:
   - version: "1.0.0"
     type: release
