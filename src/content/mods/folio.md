@@ -2,7 +2,6 @@
 name: Folio
 summary: Библиотека книг-справочников и журналов. Замена Patchouli, в которой каждый мод сам задаёт вид своей книги.
 icon: /mods/folio/icon.svg
-status: wip
 categories: [Библиотека, Интерфейс]
 loader: Forge
 mcVersions: ["1.20.1"]

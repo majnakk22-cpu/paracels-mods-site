@@ -6,15 +6,17 @@ import Icon from '../components/Icon.astro';
 import { getMods } from '../lib/mods';
 import { cardVars, themeFonts } from '../lib/theme';
 import { url, plural, compact } from '../lib/url';
-import { SITE, STATUS_LABEL } from '../site.config';
+import { SITE, STATUS_LABEL, STATUS_ORDER } from '../site.config';
 
 const mods = await getMods();
 const featured = mods.filter((m) => m.mod.data.featured);
 const cats = new Map<string, number>();
 for (const m of mods) for (const c of m.mod.data.categories) cats.set(c, (cats.get(c) || 0) + 1);
 const catList = [...cats.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
-const statuses = new Map<string, number>();
-for (const m of mods) statuses.set(m.mod.data.status, (statuses.get(m.mod.data.status) || 0) + 1);
+// Все статусы показываются всегда, даже если модов с таким статусом пока нет
+const statuses = new Map<string, number>(STATUS_ORDER.map((s) => [s, 0]));
+for (const m of mods) statuses.set(m.status, (statuses.get(m.status) || 0) + 1);
+const hasLikes = mods.some((m) => m.reactions !== undefined);
 const authors = new Map<string, number>();
 for (const m of mods) authors.set(m.mod.data.author, (authors.get(m.mod.data.author) || 0) + 1);
 const totalDl = mods.reduce((s, m) => s + (m.downloads || 0), 0);
@@ -98,6 +100,7 @@ const featFonts = featured.flatMap((m) => themeFonts(m.mod.data.theme).slice(-1)
             <option value="order">По умолчанию</option>
             <option value="updated">Недавно обновлённые</option>
             <option value="name">По названию</option>
+            {hasLikes && <option value="likes">Популярные</option>}
             {totalDl > 0 && <option value="downloads">По скачиваниям</option>}
           </select>
         </div>
@@ -161,6 +164,7 @@ const featFonts = featured.flatMap((m) => themeFonts(m.mod.data.theme).slice(-1)
           if (key === 'name') return a.dataset.name.localeCompare(b.dataset.name, 'ru');
           if (key === 'updated') return b.dataset.updated - a.dataset.updated;
           if (key === 'downloads') return b.dataset.downloads - a.dataset.downloads;
+          if (key === 'likes') return b.dataset.likes - a.dataset.likes;
           return a.dataset.order - b.dataset.order;
         });
         sorted.forEach(function (c) { list.appendChild(c); });

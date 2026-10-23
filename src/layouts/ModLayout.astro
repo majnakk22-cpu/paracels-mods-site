@@ -3,7 +3,7 @@
 import Base from './Base.astro';
 import ModIcon from '../components/ModIcon.astro';
 import Icon from '../components/Icon.astro';
-import { type ModInfo, pageSlug, resolveDeps } from '../lib/mods';
+import { type ModInfo, pageSlug, resolveDeps, giscusEnabled } from '../lib/mods';
 import { themeVars, themeFonts } from '../lib/theme';
 import { url, formatDate, compact } from '../lib/url';
 import { STATUS_LABEL } from '../site.config';
@@ -42,7 +42,7 @@ const repoUrl = d.repo ? `https://github.com/${d.repo}` : undefined;
         <ModIcon name={d.name} icon={d.icon} />
         <div>
           <div class="chips">
-            <span class={`chip status status-${d.status}`}>{STATUS_LABEL[d.status]}</span>
+            <span class={`chip status status-${info.status}`}>{STATUS_LABEL[info.status]}</span>
             <span class="chip">{d.loader}</span>
             {d.mcVersions.map((v) => <span class="chip">{v}</span>)}
           </div>
@@ -53,6 +53,13 @@ const repoUrl = d.repo ? `https://github.com/${d.repo}` : undefined;
           </div>
         </div>
         <div class="actions">
+          {giscusEnabled() && (
+            <a class="btn btn-ghost" href={url(base + '/#feedback')} title="Реакции и комментарии">
+              {info.reactions !== undefined
+                ? <><Icon name="heart" />{info.reactions}<Icon name="chat" />{info.comments}</>
+                : <><Icon name="heart" />Отзывы</>}
+            </a>
+          )}
           {latest?.url
             ? <a class="btn btn-primary" href={latest.url}><Icon name="download" />Скачать {latest.version}</a>
             : <span class="btn btn-primary" aria-disabled="true"><Icon name="download" />Скоро</span>}

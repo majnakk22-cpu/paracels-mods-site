@@ -16,11 +16,12 @@ const search = [d.name, d.summary, d.modid, d.author, ...d.categories].join(' ')
   style={`--card-accent:${d.theme.accent}`}
   data-search={search}
   data-cats={JSON.stringify(d.categories)}
-  data-status={d.status}
+  data-status={info.status}
   data-author={d.author}
   data-name={d.name.toLowerCase()}
   data-updated={info.updated?.getTime() ?? 0}
   data-downloads={info.downloads ?? 0}
+  data-likes={info.reactions ?? 0}
   data-order={index}
 >
   <ModIcon name={d.name} icon={d.icon} />
@@ -28,7 +29,7 @@ const search = [d.name, d.summary, d.modid, d.author, ...d.categories].join(' ')
     <h3>{d.name}</h3><span class="by">от {d.author}</span>
     <p class="sum">{d.summary}</p>
     <div class="tags">
-      <span class={`chip status status-${d.status}`}>{STATUS_LABEL[d.status]}</span>
+      <span class={`chip status status-${info.status}`}>{STATUS_LABEL[info.status]}</span>
       {d.categories.map((c) => <span class="chip">{c}</span>)}
     </div>
   </div>
@@ -37,6 +38,9 @@ const search = [d.name, d.summary, d.modid, d.author, ...d.categories].join(' ')
       ? <span><b>{compact(info.downloads)}</b> скачиваний</span>
       : info.latest && <span><b>{info.latest.version}</b></span>}
     <span>{d.loader} · {d.mcVersions[0]}</span>
+    {info.reactions !== undefined && (
+      <span class="likes" title="Реакции и комментарии"><Icon name="heart" />{info.reactions}<Icon name="chat" />{info.comments}</span>
+    )}
     {info.updated && <span><Icon name="clock" />{formatDate(info.updated)}</span>}
   </div>
 </a>

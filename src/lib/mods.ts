@@ -1,4 +1,5 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
+import { SITE } from '../site.config';
 
 export type Mod = CollectionEntry<'mods'>;
 export type ModPage = CollectionEntry<'pages'>;
@@ -17,9 +18,14 @@ export type Version = {
   size?: number;
 };
 
+export type Status = 'release' | 'beta' | 'alpha' | 'wip';
+
 export type ModInfo = {
   mod: Mod;
   slug: string;
+  status: Status;
+  reactions?: number; // реакции в GitHub Discussions (giscus)
+  comments?: number;
   versions: Version[];
   latest?: Version;
   downloads?: number;
@@ -81,6 +87,49 @@ function releasesFor(repo: string) {
   return cache.get(repo)!;
 }
 
+// ---------- Реакции giscus (GitHub Discussions) ----------
+type Feedback = { reactions: number; comments: number };
+let feedback: Promise<Map<string, Feedback> | null> | undefined;
+
+export function giscusEnabled() {
+  return Boolean(SITE.repo && SITE.giscus.repoId && SITE.giscus.categoryId);
+}
+
+async function fetchFeedback(): Promise<Map<string, Feedback> | null> {
+  const token = process.env.GITHUB_TOKEN;
+  if (!giscusEnabled() || !token) return null;
+  const [owner, name] = SITE.repo.split('/');
+  const query = `query($owner:String!,$name:String!,$cat:ID!){repository(owner:$owner,name:$name){discussions(first:100,categoryId:$cat){nodes{title comments{totalCount} reactionGroups{reactors{totalCount}}}}}}`;
+  try {
+    const res = await fetch('https://api.github.com/graphql', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', 'User-Agent': 'mods-site-builder' },
+      body: JSON.stringify({ query, variables: { owner, name, cat: SITE.giscus.categoryId } }),
+    });
+    const json: any = await res.json();
+    const nodes: any[] = json?.data?.repository?.discussions?.nodes;
+    if (!nodes) {
+      console.warn('[mods] giscus: не удалось получить реакции', JSON.stringify(json?.errors ?? res.status));
+      return null;
+    }
+    const map = new Map<string, Feedback>();
+    for (const n of nodes) {
+      map.set(String(n.title).trim(), {
+        reactions: (n.reactionGroups || []).reduce((s: number, g: any) => s + (g.reactors?.totalCount || 0), 0),
+        comments: n.comments?.totalCount || 0,
+      });
+    }
+    return map;
+  } catch (e) {
+    console.warn('[mods] giscus:', (e as Error).message);
+    return null;
+  }
+}
+
+export function giscusTerm(slug: string) {
+  return slug; // заголовок обсуждения мода в GitHub Discussions
+}
+
 // ---------- Сборка данных ----------
 let all: Promise<ModInfo[]> | undefined;
 
@@ -92,6 +141,9 @@ export function getMods(): Promise<ModInfo[]> {
 async function load(): Promise<ModInfo[]> {
   const mods = (await getCollection('mods')).filter((m) => !m.data.draft);
   const pages = (await getCollection('pages')).filter((p) => !p.data.draft);
+
+  if (!feedback) feedback = fetchFeedback();
+  const fb = await feedback;
 
   const infos = await Promise.all(
     mods.map(async (mod): Promise<ModInfo> => {
@@ -107,9 +159,14 @@ async function load(): Promise<ModInfo[]> {
       const modPages = pages
         .filter((p) => p.id.startsWith(slug + '/'))
         .sort((a, b) => a.data.order - b.data.order || a.data.title.localeCompare(b.data.title));
+      const status: Status = mod.data.status ?? (versions[0]?.type as Status | undefined) ?? 'wip';
+      const f = fb ? fb.get(giscusTerm(slug)) ?? { reactions: 0, comments: 0 } : undefined;
       return {
         mod,
         slug,
+        status,
+        reactions: f?.reactions,
+        comments: f?.comments,
         versions,
         latest,
         downloads: dl,

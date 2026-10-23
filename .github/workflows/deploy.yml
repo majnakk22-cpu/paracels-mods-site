@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read
+  discussions: read # чтобы показывать число реакций и комментариев на карточках
   pages: write
   id-token: write
 

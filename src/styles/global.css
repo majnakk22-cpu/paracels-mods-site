@@ -172,6 +172,8 @@ h1, h2, h3, h4 { font-family: var(--heading-font); line-height: 1.2; margin: 0 0
 .mod-card .tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .mod-card .meta { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; color: var(--muted); font-size: 13px; text-align: right; white-space: nowrap; }
 .mod-card .meta b { color: var(--text); font-size: 16px; }
+.mod-card .likes { display: inline-flex; align-items: center; gap: 2px; }
+.mod-card .likes svg + svg { margin-left: 8px; }
 .mod-card .meta svg { width: 14px; height: 14px; vertical-align: -2px; margin-right: 4px; }
 @media (max-width: 640px) {
   .mod-card { grid-template-columns: 56px 1fr; }
@@ -404,3 +406,9 @@ body.modpage { background:
 .rules svg { width: 16px; height: 16px; color: var(--accent); flex: none; margin-top: 3px; }
 .links-plain { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; font-weight: 700; font-size: 14px; }
 .links-plain svg { width: 16px; height: 16px; }
+
+/* ============ Реакции и отзывы ============ */
+.feedback { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); }
+.feedback h2 { font-size: 23px; margin-bottom: 4px; }
+.feedback-hint { color: var(--muted); font-size: 14.5px; margin: 0 0 18px; }
+.mod-hero .actions .btn-ghost svg + svg { margin-left: 6px; }

@@ -2,7 +2,6 @@
 name: Story Scenes
 summary: Сюжетные катсцены как в летсплеях — камера, актёры, декорации. Сцены собираются из кода, JSON или прямо командами.
 icon: /mods/storyscenes/icon.svg
-status: beta
 categories: [Библиотека, Сюжет]
 loader: Forge
 mcVersions: ["1.20.1"]

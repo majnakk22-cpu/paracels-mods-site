@@ -2,7 +2,6 @@
 name: "Parasites: Outbreak"
 summary: Паразиты пробуждаются из-под земли. Стадии заражения, боссы, Сердце биома и мир, который медленно перестаёт быть твоим.
 icon: /mods/parasites/icon.svg
-status: wip
 categories: [Мобы, Боссы, Хоррор, Генерация мира]
 loader: Forge
 mcVersions: ["1.20.1"]

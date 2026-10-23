@@ -41,7 +41,8 @@ const mods = defineCollection({
     author: z.string().default(SITE.author), // автор мода
     authorUrl: z.string().optional(), // ссылка на автора (GitHub, Discord и т.п.)
     icon: z.string().optional(), // путь от public/, например /mods/parasites/icon.svg
-    status: z.enum(['release', 'beta', 'alpha', 'wip']).default('wip'),
+    // Статус. Если не указан — берётся из последней версии (релиз/бета/альфа), а без версий — «в разработке»
+    status: z.enum(['release', 'beta', 'alpha', 'wip']).optional(),
     categories: z.array(z.string()).default([]),
     loader: z.string().default('Forge'),
     mcVersions: z.array(z.string()).default(['1.20.1']),

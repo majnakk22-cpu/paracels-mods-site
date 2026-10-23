@@ -1,7 +1,8 @@
 ---
 import { render } from 'astro:content';
 import ModLayout from '../../../layouts/ModLayout.astro';
-import { getMods } from '../../../lib/mods';
+import Giscus from '../../../components/Giscus.astro';
+import { getMods, giscusEnabled } from '../../../lib/mods';
 
 export async function getStaticPaths() {
   const mods = await getMods();
@@ -12,4 +13,5 @@ const { Content } = await render(info.mod);
 ---
 <ModLayout info={info} tab="overview">
   <article class="prose"><Content /></article>
+  {giscusEnabled() && <Giscus slug={info.slug} bg={info.mod.data.theme.bg} />}
 </ModLayout>
