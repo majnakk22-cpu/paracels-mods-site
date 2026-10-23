@@ -1,5 +1,6 @@
 import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
+import { SITE } from './site.config';
 
 const link = z.object({ label: z.string(), url: z.string() });
 
@@ -37,6 +38,8 @@ const mods = defineCollection({
   schema: z.object({
     name: z.string(),
     summary: z.string(),
+    author: z.string().default(SITE.author), // автор мода
+    authorUrl: z.string().optional(), // ссылка на автора (GitHub, Discord и т.п.)
     icon: z.string().optional(), // путь от public/, например /mods/parasites/icon.svg
     status: z.enum(['release', 'beta', 'alpha', 'wip']).default('wip'),
     categories: z.array(z.string()).default([]),

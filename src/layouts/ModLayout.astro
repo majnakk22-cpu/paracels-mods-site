@@ -97,6 +97,7 @@ const repoUrl = d.repo ? `https://github.com/${d.repo}` : undefined;
         <div class="panel">
           <h4>Информация</h4>
           <dl class="kv">
+            <dt>Автор</dt><dd>{d.authorUrl ? <a href={d.authorUrl} target="_blank" rel="noopener">{d.author}</a> : d.author}</dd>
             <dt>Загрузчик</dt><dd>{d.loader}</dd>
             <dt>Minecraft</dt><dd>{d.mcVersions.join(', ')}</dd>
             {d.modid && <><dt>modid</dt><dd><code>{d.modid}</code></dd></>}

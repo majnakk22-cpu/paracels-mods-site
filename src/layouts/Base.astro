@@ -47,10 +47,11 @@ const isHome = path === url('/') || path === url('/').replace(/\/$/, '');
       <div class="container">
         <a class="brand" href={url('/')}>
           <span class="brand-mark"><Icon name="cube" /></span>
-          {SITE.title}
+          <span class="brand-text">{SITE.title}</span>
         </a>
         <nav class="nav">
           <a href={url('/')} aria-current={isHome ? 'page' : undefined}>Моды</a>
+          <a href={url('/submit/')} aria-current={path.startsWith(url('/submit')) ? 'page' : undefined}>Добавить мод</a>
           {SITE.github && <a class="hide-sm" href={SITE.github} target="_blank" rel="noopener">GitHub</a>}
           {SITE.discord && <a class="hide-sm" href={SITE.discord} target="_blank" rel="noopener">Discord</a>}
           {hub && (

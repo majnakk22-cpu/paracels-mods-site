@@ -1,0 +1,62 @@
+name: Заявка на добавление мода
+description: Предложить мод для каталога на сайте
+title: "[Мод] "
+labels: ["заявка"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Спасибо за заявку! Обычно её удобнее заполнить на сайте, на странице «Добавить мод», — поля подставятся сюда сами.
+        Иконку и скриншоты можно просто перетащить в это окно.
+  - type: input
+    id: mod_name
+    attributes: { label: Название мода }
+    validations: { required: true }
+  - type: input
+    id: author
+    attributes: { label: Автор, description: Ник, который будет указан на сайте }
+    validations: { required: true }
+  - type: input
+    id: contact
+    attributes: { label: Как с тобой связаться, description: "Discord, Telegram, GitHub или почта" }
+    validations: { required: true }
+  - type: input
+    id: summary
+    attributes: { label: Короткое описание, description: "1–2 предложения для карточки в каталоге" }
+    validations: { required: true }
+  - type: textarea
+    id: description
+    attributes: { label: Подробное описание, description: "Что добавляет мод. Можно Markdown." }
+  - type: input
+    id: loader
+    attributes: { label: Загрузчик, placeholder: "Forge / NeoForge / Fabric / Quilt" }
+    validations: { required: true }
+  - type: input
+    id: mc_version
+    attributes: { label: Версии Minecraft, placeholder: "1.20.1" }
+    validations: { required: true }
+  - type: input
+    id: status
+    attributes: { label: Статус, placeholder: "Релиз / Бета / Альфа / В разработке" }
+  - type: input
+    id: categories
+    attributes: { label: Категории, placeholder: "Мобы, Хоррор" }
+  - type: input
+    id: download
+    attributes: { label: Ссылка на скачивание, description: "GitHub Releases, CurseForge или Modrinth" }
+    validations: { required: true }
+  - type: textarea
+    id: links
+    attributes: { label: Другие ссылки, description: "Исходный код, Discord, видео — по одной в строке" }
+  - type: input
+    id: icon
+    attributes: { label: Иконка, description: "Ссылка на картинку или перетащи файл в поле «Подробное описание»" }
+  - type: checkboxes
+    id: agree
+    attributes:
+      label: Подтверждение
+      options:
+        - label: Я автор мода или у меня есть разрешение автора на публикацию
+          required: true
+        - label: Мод не содержит вредоносного кода, а ссылка на скачивание рабочая
+          required: true

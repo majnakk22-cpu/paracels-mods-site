@@ -15,6 +15,8 @@ for (const m of mods) for (const c of m.mod.data.categories) cats.set(c, (cats.g
 const catList = [...cats.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
 const statuses = new Map<string, number>();
 for (const m of mods) statuses.set(m.mod.data.status, (statuses.get(m.mod.data.status) || 0) + 1);
+const authors = new Map<string, number>();
+for (const m of mods) authors.set(m.mod.data.author, (authors.get(m.mod.data.author) || 0) + 1);
 const totalDl = mods.reduce((s, m) => s + (m.downloads || 0), 0);
 const pagesCount = mods.reduce((s, m) => s + m.pages.length, 0);
 const featFonts = featured.flatMap((m) => themeFonts(m.mod.data.theme).slice(-1));
@@ -22,13 +24,15 @@ const featFonts = featured.flatMap((m) => themeFonts(m.mod.data.theme).slice(-1)
 <Base fonts={featFonts}>
   <section class="hero">
     <div class="container">
-      <h1>Моды от <span>{SITE.author}</span></h1>
+      <h1>{SITE.heroTitle} <span>{SITE.heroAccent}</span></h1>
       <p>{SITE.tagline}</p>
       <div class="hero-stats">
         <div><b>{mods.length}</b><span>{plural(mods.length, 'мод', 'мода', 'модов')}</span></div>
         <div><b>{pagesCount}</b><span>{plural(pagesCount, 'страница', 'страницы', 'страниц')} вики</span></div>
         {totalDl > 0 && <div><b>{compact(totalDl)}</b><span>скачиваний</span></div>}
+        {authors.size > 1 && <div><b>{authors.size}</b><span>{plural(authors.size, 'автор', 'автора', 'авторов')}</span></div>}
       </div>
+      <a class="btn btn-ghost hero-cta" href={url('/submit/')}><Icon name="plus" />Добавить свой мод</a>
     </div>
   </section>
 
@@ -53,13 +57,26 @@ const featFonts = featured.flatMap((m) => themeFonts(m.mod.data.theme).slice(-1)
     <section class="catalog">
       <aside class="filters" aria-label="Фильтры">
         <div class="filter-group">
-          <h4>Категории</h4>
+          <div class="filters-head">
+            <h4>Категории</h4>
+            <button class="reset" type="button" id="reset" hidden>Сбросить</button>
+          </div>
           <div class="opts">
             {catList.map(([c, n]) => (
               <label class="opt"><input type="checkbox" name="cat" value={c} />{c}<span class="n">{n}</span></label>
             ))}
           </div>
         </div>
+        {authors.size > 1 && (
+          <div class="filter-group">
+            <h4>Автор</h4>
+            <div class="opts">
+              {[...authors.entries()].sort((a, b) => b[1] - a[1]).map(([a, n]) => (
+                <label class="opt"><input type="checkbox" name="author" value={a} />{a}<span class="n">{n}</span></label>
+              ))}
+            </div>
+          </div>
+        )}
         <div class="filter-group">
           <h4>Статус</h4>
           <div class="opts">
@@ -99,25 +116,45 @@ const featFonts = featured.flatMap((m) => themeFonts(m.mod.data.theme).slice(-1)
       var q = document.getElementById('q');
       var sort = document.getElementById('sort');
       var empty = document.getElementById('empty');
+      var reset = document.getElementById('reset');
       var boxes = Array.prototype.slice.call(document.querySelectorAll('.filters input'));
       var params = new URLSearchParams(location.search);
       var pre = params.getAll('cat');
       boxes.forEach(function (b) { if (b.name === 'cat' && pre.indexOf(b.value) >= 0) b.checked = true; });
       if (params.get('q')) q.value = params.get('q');
 
+      cards.forEach(function (c) { c._cats = JSON.parse(c.dataset.cats); });
+      function checked(name) {
+        return boxes.filter(function (b) { return b.name === name && b.checked; }).map(function (b) { return b.value; });
+      }
+      // Категории: у мода должны быть ВСЕ отмеченные категории (логика «и»).
+      // Статус и автор: любой из отмеченных (у мода он всего один).
+      function matches(c, f) {
+        return (!f.text || c.dataset.search.indexOf(f.text) >= 0)
+          && f.cats.every(function (x) { return c._cats.indexOf(x) >= 0; })
+          && (!f.sts.length || f.sts.indexOf(c.dataset.status) >= 0)
+          && (!f.authors.length || f.authors.indexOf(c.dataset.author) >= 0);
+      }
+
       function apply() {
-        var text = q.value.trim().toLowerCase();
-        var cats = boxes.filter(function (b) { return b.name === 'cat' && b.checked; }).map(function (b) { return b.value; });
-        var sts = boxes.filter(function (b) { return b.name === 'status' && b.checked; }).map(function (b) { return b.value; });
+        var f = { text: q.value.trim().toLowerCase(), cats: checked('cat'), sts: checked('status'), authors: checked('author') };
         var shown = 0;
         cards.forEach(function (c) {
-          var mc = JSON.parse(c.dataset.cats);
-          var ok = (!text || c.dataset.search.indexOf(text) >= 0)
-            && cats.every(function (x) { return mc.indexOf(x) >= 0; })
-            && (!sts.length || sts.indexOf(c.dataset.status) >= 0);
+          var ok = matches(c, f);
           c.hidden = !ok;
           if (ok) shown++;
         });
+        // Счётчики показывают, сколько модов останется, если отметить этот пункт
+        boxes.forEach(function (b) {
+          var g = { text: f.text, cats: f.cats, sts: f.sts, authors: f.authors };
+          if (b.name === 'cat') g.cats = b.checked ? f.cats : f.cats.concat(b.value);
+          if (b.name === 'status') g.sts = [b.value];
+          if (b.name === 'author') g.authors = [b.value];
+          var n = cards.filter(function (c) { return matches(c, g); }).length;
+          b.parentNode.querySelector('.n').textContent = n;
+          b.parentNode.classList.toggle('off', n === 0 && !b.checked);
+        });
+        reset.hidden = !(f.cats.length || f.sts.length || f.authors.length || f.text);
         empty.hidden = shown > 0;
         var key = sort.value;
         var sorted = cards.slice().sort(function (a, b) {
@@ -128,6 +165,12 @@ const featFonts = featured.flatMap((m) => themeFonts(m.mod.data.theme).slice(-1)
         });
         sorted.forEach(function (c) { list.appendChild(c); });
       }
+      reset.addEventListener('click', function () {
+        boxes.forEach(function (b) { b.checked = false; });
+        q.value = '';
+        if (location.search) history.replaceState(null, '', location.pathname);
+        apply();
+      });
       q.addEventListener('input', apply);
       sort.addEventListener('change', apply);
       boxes.forEach(function (b) { b.addEventListener('change', apply); });

@@ -1,0 +1,159 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { getMods } from '../lib/mods';
+import { SITE } from '../site.config';
+
+// Правила публикации — меняй как хочешь
+const RULES = [
+  'Мод твой — или у тебя есть разрешение автора.',
+  'Ссылка на скачивание рабочая и ведёт на GitHub, CurseForge или Modrinth.',
+  'Никакого вредоносного кода, рекламных сокращателей ссылок и платного доступа.',
+  'Мод для Minecraft: Java Edition.',
+  'Я могу отказать или попросить что-то поправить перед публикацией.',
+];
+
+const mods = await getMods();
+const cats = [...new Set(mods.flatMap((m) => m.mod.data.categories))].sort((a, b) => a.localeCompare(b, 'ru'));
+const repo = SITE.repo;
+---
+<Base title="Добавить мод" description="Заявка на добавление своего мода в каталог.">
+  <section class="hero">
+    <div class="container">
+      <h1>Добавить <span>свой мод</span></h1>
+      <p>Заполни заявку — я проверю мод и сделаю для него страницу в каталоге, с твоим оформлением и вики.</p>
+    </div>
+  </section>
+
+  <div class="container submit-grid">
+    <form id="form" class="panel form" novalidate data-repo={repo}>
+      {!repo && (
+        <div class="callout callout-warning">
+          <p class="callout-title">Заявки пока не настроены</p>
+          <p>Владельцу сайта: укажи <code>repo</code> в <code>src/site.config.ts</code> или собирай сайт через GitHub Actions.</p>
+        </div>
+      )}
+
+      <fieldset>
+        <legend>О моде</legend>
+        <div class="row2">
+          <label class="field"><span>Название <i>*</i></span><input name="mod_name" required maxlength="80" placeholder="Например, Deep Caves" /></label>
+          <label class="field"><span>Автор <i>*</i></span><input name="author" required maxlength="60" placeholder="Твой ник" /></label>
+        </div>
+        <label class="field"><span>Короткое описание <i>*</i></span>
+          <input name="summary" required maxlength="180" placeholder="1–2 предложения для карточки в каталоге" />
+          <small class="counter" data-for="summary"></small>
+        </label>
+        <label class="field"><span>Подробное описание</span>
+          <textarea name="description" rows="6" maxlength="1200" placeholder="Что добавляет мод: мобы, предметы, механики… Можно Markdown."></textarea>
+          <small class="counter" data-for="description"></small>
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Технические данные</legend>
+        <div class="row3">
+          <label class="field"><span>Загрузчик <i>*</i></span>
+            <select name="loader" required>
+              <option>Forge</option><option>NeoForge</option><option>Fabric</option><option>Quilt</option><option>Другое</option>
+            </select>
+          </label>
+          <label class="field"><span>Версии Minecraft <i>*</i></span><input name="mc_version" required maxlength="60" placeholder="1.20.1" /></label>
+          <label class="field"><span>Статус</span>
+            <select name="status"><option>Релиз</option><option>Бета</option><option>Альфа</option><option selected>В разработке</option></select>
+          </label>
+        </div>
+        <div class="field">
+          <span>Категории</span>
+          <div class="cat-picks" id="cats">
+            {cats.map((c) => <label class="pick"><input type="checkbox" value={c} />{c}</label>)}
+          </div>
+          <input name="categories_extra" maxlength="100" placeholder="Свои категории через запятую" />
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Ссылки и контакты</legend>
+        <label class="field"><span>Ссылка на скачивание <i>*</i></span><input name="download" type="url" required placeholder="https://github.com/…/releases" /></label>
+        <label class="field"><span>Другие ссылки</span><textarea name="links" rows="3" maxlength="500" placeholder="Исходный код, Discord, видео — по одной в строке"></textarea></label>
+        <div class="row2">
+          <label class="field"><span>Как с тобой связаться <i>*</i></span><input name="contact" required maxlength="120" placeholder="Discord, Telegram или почта" /></label>
+          <label class="field"><span>Иконка (ссылка)</span><input name="icon" type="url" placeholder="https://…/icon.png" /></label>
+        </div>
+      </fieldset>
+
+      <label class="agree"><input type="checkbox" name="agree" required /> Я автор мода или у меня есть разрешение автора, и мод соответствует правилам справа.</label>
+
+      <p class="form-error" id="error" hidden></p>
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit" disabled={!repo}><Icon name="send" />Отправить заявку</button>
+        <span class="hint">Откроется GitHub с заполненной заявкой — останется нажать <b>Create</b>.</span>
+      </div>
+    </form>
+
+    <aside class="side">
+      <div class="panel">
+        <h4>Как это работает</h4>
+        <ol class="steps">
+          <li><b>Заполни форму</b> на этой странице.</li>
+          <li><b>Подтверди на GitHub.</b> Откроется готовая заявка — нажми <i>Create</i>. Иконку и скриншоты можно перетащить прямо туда. Нужен аккаунт GitHub.</li>
+          <li><b>Жди ответа.</b> Я проверю мод, отвечу в заявке и добавлю страницу на сайт.</li>
+        </ol>
+        {repo && <a class="links-plain" href={`https://github.com/${repo}/issues?q=label%3A%D0%B7%D0%B0%D1%8F%D0%B2%D0%BA%D0%B0`} target="_blank" rel="noopener"><Icon name="github" />Все заявки</a>}
+      </div>
+      <div class="panel">
+        <h4>Правила</h4>
+        <ul class="rules">
+          {RULES.map((r) => <li><Icon name="check" />{r}</li>)}
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  <script is:inline>
+    (function () {
+      var form = document.getElementById('form');
+      var repo = form.dataset.repo;
+      var err = document.getElementById('error');
+
+      Array.prototype.forEach.call(document.querySelectorAll('.counter'), function (c) {
+        var el = form.elements[c.dataset.for];
+        function upd() { c.textContent = el.value.length + ' / ' + el.maxLength; }
+        el.addEventListener('input', upd); upd();
+      });
+
+      function val(n) { return (form.elements[n].value || '').trim(); }
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        err.hidden = true;
+        Array.prototype.forEach.call(form.querySelectorAll('.invalid'), function (x) { x.classList.remove('invalid'); });
+        var bad = Array.prototype.filter.call(form.querySelectorAll('[required]'), function (el) { return !el.checkValidity(); });
+        if (bad.length) {
+          bad.forEach(function (el) { (el.closest('.field') || el.closest('.agree')).classList.add('invalid'); });
+          err.textContent = 'Заполни обязательные поля, отмеченные звёздочкой.';
+          err.hidden = false;
+          bad[0].focus();
+          return;
+        }
+        var cats = Array.prototype.filter.call(document.querySelectorAll('#cats input'), function (x) { return x.checked; })
+          .map(function (x) { return x.value; });
+        val('categories_extra').split(',').forEach(function (x) { x = x.trim(); if (x) cats.push(x); });
+
+        var p = new URLSearchParams();
+        p.set('template', 'mod-request.yml');
+        p.set('title', '[Мод] ' + val('mod_name'));
+        ['mod_name', 'author', 'contact', 'summary', 'description', 'loader', 'mc_version', 'status', 'download', 'links', 'icon']
+          .forEach(function (k) { if (val(k)) p.set(k, val(k)); });
+        if (cats.length) p.set('categories', cats.join(', '));
+        var link = 'https://github.com/' + repo + '/issues/new?' + p.toString();
+        if (link.length > 7800) {
+          err.textContent = 'Заявка слишком длинная для ссылки — сократи подробное описание, остальное допишешь на GitHub.';
+          err.hidden = false;
+          return;
+        }
+        window.open(link, '_blank', 'noopener');
+      });
+    })();
+  </script>
+</Base>

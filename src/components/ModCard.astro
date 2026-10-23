@@ -3,12 +3,12 @@ import ModIcon from './ModIcon.astro';
 import Icon from './Icon.astro';
 import type { ModInfo } from '../lib/mods';
 import { url, formatDate, compact } from '../lib/url';
-import { SITE, STATUS_LABEL } from '../site.config';
+import { STATUS_LABEL } from '../site.config';
 
 interface Props { info: ModInfo; index: number }
 const { info, index } = Astro.props;
 const d = info.mod.data;
-const search = [d.name, d.summary, d.modid, ...d.categories].join(' ').toLowerCase();
+const search = [d.name, d.summary, d.modid, d.author, ...d.categories].join(' ').toLowerCase();
 ---
 <a
   class="mod-card"
@@ -17,6 +17,7 @@ const search = [d.name, d.summary, d.modid, ...d.categories].join(' ').toLowerCa
   data-search={search}
   data-cats={JSON.stringify(d.categories)}
   data-status={d.status}
+  data-author={d.author}
   data-name={d.name.toLowerCase()}
   data-updated={info.updated?.getTime() ?? 0}
   data-downloads={info.downloads ?? 0}
@@ -24,7 +25,7 @@ const search = [d.name, d.summary, d.modid, ...d.categories].join(' ').toLowerCa
 >
   <ModIcon name={d.name} icon={d.icon} />
   <div>
-    <h3>{d.name}</h3><span class="by">от {SITE.author}</span>
+    <h3>{d.name}</h3><span class="by">от {d.author}</span>
     <p class="sum">{d.summary}</p>
     <div class="tags">
       <span class={`chip status status-${d.status}`}>{STATUS_LABEL[d.status]}</span>
